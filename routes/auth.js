@@ -84,18 +84,19 @@ router.post("/login", [
         id: user.id,
       }
     }
-    const authtoken = jwt.sign(data, jwt_secure);
+    const authtoken =  jwt.sign(data, jwt_secure);
     success = true;
     res.json({ success, authtoken })
   } catch (error) {
+    // console.log(res.json({ success, authtoken }))
     console.error(error.message);
-    res.status(404).send("Error occured");
+    res.status(404).json("Error occured");
   }
 });
 //ROUTE 3 : get user details using post /api/auth/getuser endpoint login required
 router.post("/getuser", fetchuser , async (req, res) => {
   try {
-    userId=req.user.id;
+    let userId=req.user.id;
     const user = await User.findById(userId).select("-password")
     res.send(user)
   } catch (error) {
