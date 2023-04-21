@@ -5,7 +5,7 @@ const mongoURI = process.env.REACT_APP_MONGO;
 const connectmongo = ()=>{
     mongoose.set('strictQuery', true);
     mongoose.connect(mongoURI,()=>{
-        console.log("connected to database")
+        console.log("connected with database")
     })
 }
 module.exports=connectmongo;
