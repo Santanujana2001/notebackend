@@ -1,10 +1,18 @@
-const express = require("express");
-const router = express.Router();
-const User = require("../models/User");
-const { body, validationResult } = require("express-validator");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-var fetchuser =require("../middleware/fetchuser");
+import { Router } from "express";
+const router = Router();
+import { findOne, create, findById } from "../models/User";
+import { body, validationResult } from "express-validator";
+import { genSalt, hash, compare } from "bcrypt";
+import { sign } from "jsonwebtoken";
+import fetchuser from "../middleware/fetchuser";
+
+// const express = require("express");
+// const router = express.Router();
+// const User = require("../models/User");
+// const { body, validationResult } = require("express-validator");
+// const bcrypt = require("bcrypt");
+// const jwt = require("jsonwebtoken");
+// var fetchuser =require("../middleware/fetchuser");
 
 const jwt_secure = "santanu";
 // ROUTE 1: creating user using post /api/auth/createuser endpoint no login required
@@ -24,13 +32,13 @@ router.post(
       return res.status(400).json({ success, errors: errors.array() });
     }
     try {
-      let user = await User.findOne({ email: req.body.email });
+      let user = await findOne({ email: req.body.email });
       if (user) {
         return res.status(404).json({ success, error: "email already exists" });
       }
-      const salt = await bcrypt.genSalt(10);
-      const secpass = await bcrypt.hash(req.body.password, salt);
-      user = await User.create({
+      const salt = await genSalt(10);
+      const secpass = await hash(req.body.password, salt);
+      user = await create({
         name: req.body.name,
         email: req.body.email,
         password: secpass,
@@ -45,7 +53,7 @@ router.post(
           id: user.id,
         }
       }
-      const authtoken = jwt.sign(data, jwt_secure);
+      const authtoken = sign(data, jwt_secure);
       success=true;
       res.json({ success, authtoken });
     } catch (error) {
@@ -69,12 +77,12 @@ router.post("/login", [
   }
   const{email,password}=req.body;
   try {
-    let user = await User.findOne({email});
+    let user = await findOne({email});
     if(!user){
       success = false;
       return res.status(404).json({error:"Invalid credentials"});
     }
-    const passcompare = await bcrypt.compare(password,user.password);
+    const passcompare = await compare(password,user.password);
     if(!passcompare){
       success = false;
       return res.status(404).json({ success, error:"Invalid credentials"});
@@ -84,12 +92,13 @@ router.post("/login", [
         id: user.id,
       }
     }
-    const authtoken =  jwt.sign(data, jwt_secure);
+    const authtoken =  sign(data, jwt_secure);
     success = true;
     res.json({ success, authtoken })
   } catch (error) {
     // console.log(res.json({ success, authtoken }))
     console.error(error.message);
+    console.log(error)
     res.status(404).json("Error occured");
   }
 });
@@ -97,7 +106,7 @@ router.post("/login", [
 router.post("/getuser", fetchuser , async (req, res) => {
   try {
     let userId=req.user.id;
-    const user = await User.findById(userId).select("-password")
+    const user = await findById(userId).select("-password")
     res.send(user)
   } catch (error) {
     console.error(error.message);
@@ -105,4 +114,4 @@ router.post("/getuser", fetchuser , async (req, res) => {
   }
 })
 
-module.exports = router;
+export default router;
