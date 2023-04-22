@@ -1,12 +1,12 @@
-import connectmongo from './db';
-import express, { json } from 'express';
+const connectmongo = require('./db');
+const express = require('express')
 connectmongo();
-import cors from 'cors';
+var cors = require('cors')
 
 const app = express()
 const port = process.env.PORT || 5000
 
-app.use(json())
+app.use(express.json())
 app.use(cors())
 
 // Available routes
