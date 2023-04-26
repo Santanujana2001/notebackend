@@ -5,11 +5,13 @@ const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 var fetchuser = require("../middleware/fetchuser");
+var nodemailer = require('nodemailer');
 
 const jwt_secure = "santanu";
 // ROUTE 1: creating user using post /api/auth/createuser endpoint no login required
 
 router.post("/createuser", [body("name", "enter vaild name").isLength({ min: 3 }), body("email", "enter vaild email").isEmail(), body("password", "password must be 3 characters").isLength({ min: 5 })], async (req, res) => {
+  
   let success = false;
   // Finds the validation errors in this request and wraps them in an object with handy functions
   const errors = validationResult(req);
@@ -28,16 +30,40 @@ router.post("/createuser", [body("name", "enter vaild name").isLength({ min: 3 }
       email: req.body.email,
       password: secpass,
     });
-    // .then((user) => res.json(user))
-    // .catch(err=>{console.log(err)
-    //   res.json({error:"enter valid credentials"})
-    // })
-    // res.json(user);
+
     const data = {
       user: {
         id: user.id,
       },
     };
+
+    // sending email 
+    // connect with smtp 
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'santanujanaofficials@gmail.com',
+        pass: 'ypofwpqsezaeozvr'
+      }
+    });
+    var mailOptions = {
+      from: 'santanujanaofficials@gmail.com',
+      to: req.body.email,
+      subject: 'thank you for creating your account',
+      text: 'Hope you are doing well , enjoy the app and have fun'
+    };
+
+     transporter.sendMail(mailOptions, function(error, info){
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+        console.log("Message sent: %s", info.messageId);
+        console.log('Email sent to : ' + req.body.email);
+      }
+    });
+    
+
     const authtoken = jwt.sign(data, jwt_secure);
     success = true;
     res.json({ success, authtoken });
@@ -85,7 +111,7 @@ router.post("/login", [body("email", "enter vaild email").isEmail(), body("passw
 //ROUTE 3 : get user details using post /api/auth/getuser endpoint login required
 router.post("/getuser", fetchuser, async (req, res) => {
   try {
-    userId = req.user.id;
+    const userId = req.user.id;
     const user = await User.findById(userId).select("-password");
     res.send(user);
   } catch (error) {
